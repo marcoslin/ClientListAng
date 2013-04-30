@@ -1,0 +1,8 @@
+{
+  "name": "jasmine-jstd-adapter",
+  "version": "1.1.2",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ibolmo/jasmine-jstd-adapter.git"
+  }
+}

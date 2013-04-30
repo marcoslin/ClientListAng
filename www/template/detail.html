@@ -1,0 +1,24 @@
+<div>
+    <h2 id="form_title" ng-bind="form_title"></h2>
+    <form name="detailForm" ng-submit="formSubmitAction()">
+        <fieldset>
+            <legend>Name</legend>
+            <ul>
+                <li><label for="object_id">ObjectID: </label><input id="object_id" type="text" ng-model="client.object_id" required readonly /></li>
+                <li><label for="first_name">First Name: </label><input id="first_name" type="text" ng-model="client.first_name" required /></li>
+                <li><label for="last_name">Last Name: </label><input id="last_name" type="text" ng-model="client.last_name" required /></li>
+            </ul>
+        </fieldset><fieldset>
+            <legend>Address</legend>
+            <ul>
+                <li><label for="city">City:</label><input id="city" type="text" ng-model="client.city" /></li>
+                <li><label for="post_code">Post Code:</label><input id="post_code" type="text" ng-model="client.post_code" /></li>
+            </ul>
+        </fieldset><fieldset>
+            <legend>Actions</legend>
+            <button id="submit_detailForm" class="btn btn-primary" type="submit" ng-bind="form_submit_caption"></button>
+            <button id="cancel_detailForm" class="btn" ng-click="cancelAction()">Cancel</button>
+        </fieldset>
+    </form>
+    <alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert()">{{ alert.msg }}</alert>
+</div>
