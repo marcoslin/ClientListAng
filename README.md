@@ -3,12 +3,12 @@
 
 The primary purpose is to illustrate how to:
 
-1. How to create a RESTFUL server in node.js  
-2. How to create a simple HTML5 app using RESTFUL  
-3. How to perform unit and end-to-end tes  
+1. Create a RESTFUL server in node.js  
+2. Create a simple HTML5 app using RESTFUL  
+3. Perform unit and end-to-end tes  
 
 # How To Run
-Start the web server and RESTFul server by:  
+Start the web and RESTFul server by:  
 `node server.njs`
 
 Open your HTML5 browser and go to:  
