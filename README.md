@@ -3,9 +3,9 @@
 
 The primary purpose is to illustrate how to:
 
-1. Create a RESTFUL server in node.js  
-2. Create a simple HTML5 app using RESTFUL  
-3. Perform unit and end-to-end tes  
+1. Create a RESTful server in `node.js`  
+2. Create a simple HTML5 app using `AngularJS`  
+3. Perform unit and end-to-end test using `Karma`  
 
 # How To Run
 Start the web and RESTFul server by:  
