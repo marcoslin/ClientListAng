@@ -26,7 +26,8 @@ required packages.
 1. [node.js](http://nodejs.org/) >= 0.10.4  
 1. [express.js](http://expressjs.com/) >= 3.2.0  
 1. [step.js](https://github.com/creationix/step) >= 0.0.5  
-1. [sqlite3](https://github.com/developmentseed/node-sqlite3) >= 2.1.7  
+1. [sqlite3](https://github.com/developmentseed/node-sqlite3) >= 2.1.7
+1. [karma-runner](http://karma-runner.github.io/) >= 0.8.5
 
 ## angular.js
 Following packages is installed under www/components directory:
