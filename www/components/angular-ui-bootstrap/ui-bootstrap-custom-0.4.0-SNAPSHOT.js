@@ -1,5 +1,4 @@
-angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.alert","ui.bootstrap.dialog"]);
-angular.module("ui.bootstrap.tpls", ["template/alert/alert.html","template/dialog/message.html"]);
+angular.module("ui.bootstrap", ["ui.bootstrap.alert","ui.bootstrap.transition","ui.bootstrap.dialog"]);
 angular.module("ui.bootstrap.alert", []).directive('alert', function () {
   return {
     restrict:'EA',
@@ -15,6 +14,89 @@ angular.module("ui.bootstrap.alert", []).directive('alert', function () {
     }
   };
 });
+
+angular.module('ui.bootstrap.transition', [])
+
+/**
+ * $transition service provides a consistent interface to trigger CSS 3 transitions and to be informed when they complete.
+ * @param  {DOMElement} element  The DOMElement that will be animated.
+ * @param  {string|object|function} trigger  The thing that will cause the transition to start:
+ *   - As a string, it represents the css class to be added to the element.
+ *   - As an object, it represents a hash of style attributes to be applied to the element.
+ *   - As a function, it represents a function to be called that will cause the transition to occur.
+ * @return {Promise}  A promise that is resolved when the transition finishes.
+ */
+.factory('$transition', ['$q', '$timeout', '$rootScope', function($q, $timeout, $rootScope) {
+
+  var $transition = function(element, trigger, options) {
+    options = options || {};
+    var deferred = $q.defer();
+    var endEventName = $transition[options.animation ? "animationEndEventName" : "transitionEndEventName"];
+
+    var transitionEndHandler = function(event) {
+      $rootScope.$apply(function() {
+        element.unbind(endEventName, transitionEndHandler);
+        deferred.resolve(element);
+      });
+    };
+
+    if (endEventName) {
+      element.bind(endEventName, transitionEndHandler);
+    }
+
+    // Wrap in a timeout to allow the browser time to update the DOM before the transition is to occur
+    $timeout(function() {
+      if ( angular.isString(trigger) ) {
+        element.addClass(trigger);
+      } else if ( angular.isFunction(trigger) ) {
+        trigger(element);
+      } else if ( angular.isObject(trigger) ) {
+        element.css(trigger);
+      }
+      //If browser does not support transitions, instantly resolve
+      if ( !endEventName ) {
+        deferred.resolve(element);
+      }
+    });
+
+    // Add our custom cancel function to the promise that is returned
+    // We can call this if we are about to run a new transition, which we know will prevent this transition from ending,
+    // i.e. it will therefore never raise a transitionEnd event for that transition
+    deferred.promise.cancel = function() {
+      if ( endEventName ) {
+        element.unbind(endEventName, transitionEndHandler);
+      }
+      deferred.reject('Transition cancelled');
+    };
+
+    return deferred.promise;
+  };
+
+  // Work out the name of the transitionEnd event
+  var transElement = document.createElement('trans');
+  var transitionEndEventNames = {
+    'WebkitTransition': 'webkitTransitionEnd',
+    'MozTransition': 'transitionend',
+    'OTransition': 'oTransitionEnd',
+    'transition': 'transitionend'
+  };
+  var animationEndEventNames = {
+    'WebkitTransition': 'webkitAnimationEnd',
+    'MozTransition': 'animationend',
+    'OTransition': 'oAnimationEnd',
+    'transition': 'animationend'
+  };
+  function findEndEventName(endEventNames) {
+    for (var name in endEventNames){
+      if (transElement.style[name] !== undefined) {
+        return endEventNames[name];
+      }
+    }
+  }
+  $transition.transitionEndEventName = findEndEventName(transitionEndEventNames);
+  $transition.animationEndEventName = findEndEventName(animationEndEventNames);
+  return $transition;
+}]);
 
 // The `$dialogProvider` can be used to configure global defaults for your
 // `$dialog` service.
@@ -111,6 +193,10 @@ dialogModule.provider("$dialog", function(){
         e.preventDefault();
         self.$scope.$apply();
       };
+
+      this.handleLocationChange = function() {
+        self.close();
+      };
     }
 
     // The `isOpen()` method returns wether the dialog is currently visible.
@@ -141,7 +227,7 @@ dialogModule.provider("$dialog", function(){
 
         if (self.options.controller) {
           var ctrl = $controller(self.options.controller, locals);
-          self.modalEl.contents().data('ngControllerController', ctrl);
+          self.modalEl.children().data('ngControllerController', ctrl);
         }
 
         $compile(self.modalEl)($scope);
@@ -202,6 +288,8 @@ dialogModule.provider("$dialog", function(){
     Dialog.prototype._bindEvents = function() {
       if(this.options.keyboard){ body.bind('keydown', this.handledEscapeKey); }
       if(this.options.backdrop && this.options.backdropClick){ this.backdropEl.bind('click', this.handleBackDropClick); }
+
+      this.$scope.$on('$locationChangeSuccess', this.handleLocationChange);
     };
 
     Dialog.prototype._unbindEvents = function() {
@@ -299,109 +387,3 @@ dialogModule.provider("$dialog", function(){
     };
   }];
 });
-
-angular.module('ui.bootstrap.transition', [])
-
-/**
- * $transition service provides a consistent interface to trigger CSS 3 transitions and to be informed when they complete.
- * @param  {DOMElement} element  The DOMElement that will be animated.
- * @param  {string|object|function} trigger  The thing that will cause the transition to start:
- *   - As a string, it represents the css class to be added to the element.
- *   - As an object, it represents a hash of style attributes to be applied to the element.
- *   - As a function, it represents a function to be called that will cause the transition to occur.
- * @return {Promise}  A promise that is resolved when the transition finishes.
- */
-.factory('$transition', ['$q', '$timeout', '$rootScope', function($q, $timeout, $rootScope) {
-
-  var $transition = function(element, trigger, options) {
-    options = options || {};
-    var deferred = $q.defer();
-    var endEventName = $transition[options.animation ? "animationEndEventName" : "transitionEndEventName"];
-
-    var transitionEndHandler = function(event) {
-      $rootScope.$apply(function() {
-        element.unbind(endEventName, transitionEndHandler);
-        deferred.resolve(element);
-      });
-    };
-
-    if (endEventName) {
-      element.bind(endEventName, transitionEndHandler);
-    }
-
-    // Wrap in a timeout to allow the browser time to update the DOM before the transition is to occur
-    $timeout(function() {
-      if ( angular.isString(trigger) ) {
-        element.addClass(trigger);
-      } else if ( angular.isFunction(trigger) ) {
-        trigger(element);
-      } else if ( angular.isObject(trigger) ) {
-        element.css(trigger);
-      }
-      //If browser does not support transitions, instantly resolve
-      if ( !endEventName ) {
-        deferred.resolve(element);
-      }
-    });
-
-    // Add our custom cancel function to the promise that is returned
-    // We can call this if we are about to run a new transition, which we know will prevent this transition from ending,
-    // i.e. it will therefore never raise a transitionEnd event for that transition
-    deferred.promise.cancel = function() {
-      if ( endEventName ) {
-        element.unbind(endEventName, transitionEndHandler);
-      }
-      deferred.reject('Transition cancelled');
-    };
-
-    return deferred.promise;
-  };
-
-  // Work out the name of the transitionEnd event
-  var transElement = document.createElement('trans');
-  var transitionEndEventNames = {
-    'WebkitTransition': 'webkitTransitionEnd',
-    'MozTransition': 'transitionend',
-    'OTransition': 'oTransitionEnd',
-    'transition': 'transitionend'
-  };
-  var animationEndEventNames = {
-    'WebkitTransition': 'webkitAnimationEnd',
-    'MozTransition': 'animationend',
-    'OTransition': 'oAnimationEnd',
-    'transition': 'animationend'
-  };
-  function findEndEventName(endEventNames) {
-    for (var name in endEventNames){
-      if (transElement.style[name] !== undefined) {
-        return endEventNames[name];
-      }
-    }
-  }
-  $transition.transitionEndEventName = findEndEventName(transitionEndEventNames);
-  $transition.animationEndEventName = findEndEventName(animationEndEventNames);
-  return $transition;
-}]);
-
-angular.module("template/alert/alert.html", []).run(["$templateCache", function($templateCache){
-  $templateCache.put("template/alert/alert.html",
-    "<div class='alert' ng-class='type && \"alert-\" + type'>" +
-    "    <button ng-show='closeable' type='button' class='close' ng-click='close()'>&times;</button>" +
-    "    <div ng-transclude></div>" +
-    "</div>" +
-    "");
-}]);
-
-angular.module("template/dialog/message.html", []).run(["$templateCache", function($templateCache){
-  $templateCache.put("template/dialog/message.html",
-    "<div class=\"modal-header\">" +
-    "	<h1>{{ title }}</h1>" +
-    "</div>" +
-    "<div class=\"modal-body\">" +
-    "	<p>{{ message }}</p>" +
-    "</div>" +
-    "<div class=\"modal-footer\">" +
-    "	<button ng-repeat=\"btn in buttons\" ng-click=\"close(btn.result)\" class=btn ng-class=\"btn.cssClass\">{{ btn.label }}</button>" +
-    "</div>" +
-    "");
-}]);

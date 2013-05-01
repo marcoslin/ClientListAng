@@ -10,7 +10,7 @@ files = [
   JASMINE_ADAPTER,
   'www/components/angular/angular.js',
   'www/components/angular-resource/angular-resource.js',
-  'www/components/angular-ui-bootstrap/ui-bootstrap-custom-0.3.0-SNAPSHOT.js',
+  'www/components/angular-ui-bootstrap/ui-bootstrap-custom-0.4.0-SNAPSHOT.js',
   'www/js/app.js',
   'utest/components/angular-mocks/angular-mocks.js',
   'utest/unit/*.js'
