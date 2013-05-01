@@ -20,5 +20,7 @@
             <button id="cancel_detailForm" class="btn" ng-click="cancelAction()">Cancel</button>
         </fieldset>
     </form>
-    <alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert()">{{ alert.msg }}</alert>
+    <div id="alert_section">
+        <alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert()">{{ alert.msg }}</alert>
+    </div>
 </div>

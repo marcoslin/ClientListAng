@@ -167,6 +167,13 @@ client_app.controller('ClientListController', function ($scope, Clients, Confirm
                 }
             });
 	};
+
+    // Close Alert
+    $scope.closeAlert = function () {
+        $scope.alerts = [];
+    };
+
+
 });
 
 client_app.controller('ClientController', function ($scope, $route, $routeParams, $location, Clients, AlertService) {

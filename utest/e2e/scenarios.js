@@ -1,6 +1,5 @@
 'use strict';
 
-
 /* http://docs.angularjs.org/guide/dev_guide.e2e-testing */
 
 describe('client.app', function() {
@@ -54,6 +53,12 @@ describe('client.app', function() {
             expect(element(".modal-header h1").text()).toMatch(/Kenisha Fredricks/);
             element(".modal-footer .confirm-ok").click();
             expect(repeater('.full_name').count()).toBe(9);
+            // Make sure that alert services display a success message
+            expect(repeater('#alert_section .alert-success').count()).toBe(1);
+            expect(element(".alert div span:first-of-type").text()).toMatch(/Kenisha Fredricks/);
+            // Make sure taht alert can be closed
+            element('#alert_section .alert .close').click();
+            expect(repeater("#alert_section .alert").count()).toBe(0);
         });
 
 	});
@@ -107,11 +112,13 @@ describe('client.app', function() {
 			input("client.first_name").enter("John");
 			input("client.last_name").enter("Tester");
 			element("#submit_detailForm").click();
-            expect(repeater(".alert").count()).toBe(1);
-			expect(element(".alert div span:first-of-type").text()).toMatch(/John Tester/);
 
-            element('.alert .close').click();
-            expect(repeater(".alert").count()).toBe(0);
+            // Make sure that alert services display a success message
+            expect(repeater("#alert_section .alert").count()).toBe(1);
+			expect(element("#alert_section .alert div span:first-of-type").text()).toMatch(/John Tester/);
+            // Make sure taht alert can be closed
+            element('#alert_section .alert .close').click();
+            expect(repeater("#alert_section .alert").count()).toBe(0);
 		});
 
 
