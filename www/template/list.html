@@ -26,5 +26,6 @@
     <p>
         <button id="add_client" class="btn btn-primary" onclick="window.location.href='#/add'">Add Client</button>
     </p>
+    <alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert()">{{ alert.msg }}</alert>
 
 </div>

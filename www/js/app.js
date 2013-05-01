@@ -1,5 +1,27 @@
 // Configure Service to access JSON provider
 angular.module("guiServices", ['ngResource', "ui.bootstrap"])
+    .factory('CacheTemplates', function($http, $templateCache) {
+        return function() {
+            /**
+             * Load all the templates into cache on startup.  This speed up the app, but
+             * more importantly, allow the angular-ui-bootstrap service to work even when
+             * the web server is down.  Without the cache, the call to angular-ui-bootstrap
+             * dies silently when template is not found.
+             */
+            var templs = [
+                'template/list.html',
+                'template/detail.html',
+                'template/alert/alert.html',
+                'template/dialog/message.html'
+            ];
+            templs.map ( function(templ) {
+                console.log("Template loaded: " + templ);
+                $http.get(templ).success( function(data) {
+                    $templateCache.put(templ, data);
+                });
+            });
+        };
+    })
 	.factory('Clients', function($resource){
 		return $resource("/json/:id", {}, {
 			query: { method:'GET', isArray:true },
@@ -15,10 +37,53 @@ angular.module("guiServices", ['ngResource', "ui.bootstrap"])
             var buttons = [ { result:'ok', label:'Ok', cssClass:'btn-primary confirm-ok'}, { result:'cancel', label:'Cancel', cssClass:'confirm-cancel'} ];
             return $dialog.messageBox(title, message, buttons);
         };
-	});
+	})
+    .factory("AlertService", function () {
+        /**
+         * Wrapper for show alert.  Ideally, it should work as:
+         *   Alert.$error("...");
+         *
+         * But as there is no easy way to inject current $scope into service,
+         * it would have to be implemented as:
+         *     Alert($scope).$error("...");
+         *
+         * The final implementation is cleaner:
+         *     var alert = AlertService($scope);
+         *     alert.$error("...");
+         */
+        var showAlert = function ($scope) {
+            this.scope = $scope;
+        };
+        showAlert.prototype.$error = function (message) {
+            this.scope.alerts = [ { type: "error", msg: message } ];
+        };
+        showAlert.prototype.$resource_error = function (message, resource_error) {
+            /**
+             * Handle RESTful server error returned by $resource.  If server is not running the error returned by $resource is:
+             *   error = { status: 0, data: ""};
+              */
+            var error_message = "";
+            if ( resource_error['data'] ) {
+                error_message = message + "  Server message: '" + resource_error['data'] + "'";
+            } else {
+                error_message = message + "  Make sure that server is running.";
+            }
+            this.$error(error_message);
+        };
+        showAlert.prototype.$success = function (message) {
+            this.scope.alerts = [ { type: "success", msg: message} ];
+        };
+        return function($scope) {
+            $scope.alerts = [];
+            return new showAlert($scope)
+        };
+    });
 
 // Initialize application
-client_app = angular.module("client.app", ["guiServices", "ui.bootstrap"])
+client_app = angular.module("client.app", ["guiServices"])
+    .run( function( CacheTemplates ) {
+        CacheTemplates();
+    });
 
 // Configure Routes
 client_app.config(function ($routeProvider) {
@@ -30,16 +95,26 @@ client_app.config(function ($routeProvider) {
 });
 
 // Configure Controller
-client_app.controller('ClientListController', function ($scope, Clients, Confirm) {
+client_app.controller('ClientListController', function ($scope, Clients, Confirm, AlertService) {
+    // Handle Alert
+    var alert = AlertService($scope);
 	// Read the list of client from url
-	$scope.clients = Clients.query();
+	$scope.clients = Clients.query(
+        angular.noop,
+        function (error) {
+            alert.$resource_error("Failed to load client list.", error);
+        }
+    );
 	// Define sort by
 	$scope.sortBy = "first_name";
 	$scope.sortDesc = false;
+    // Handle Alert
+    $scope.alerts = [];
 
 
 	// Delete client
-	$scope.removeClient = function (object_id, full_name) {
+	$scope.removeClient = function (object_id, full_name, callback) {
+        // Callback is used for unit testing to confirm that clients array has be updated correctly
         Confirm("About to delete '" + full_name + "'.")
             .open()
             .then( function (result) {
@@ -53,34 +128,42 @@ client_app.controller('ClientListController', function ($scope, Clients, Confirm
                         };
                     };
 
-                    var client_to_remove = new Clients();
-                    client_to_remove.$remove({ id: object_id });
-
                     if ( index_to_remove >= 0 ) {
-                        $scope.clients.splice(index_to_remove, 1);
+                        var remove_success = true;
+                        var client = $scope.clients[i];
+                        var client_full_name = client.first_name + " " + client.last_name;
+                        client.$remove(
+                            { id: client.object_id },
+                            function () {
+                                alert.$success("'" + client_full_name + "' deleted ")
+                                $scope.clients.splice(index_to_remove, 1);
+                                callback()
+                            },
+                            function (error) {
+                                alert.$resource_error("Failed to delete '" + client_full_name + "'.", error);
+                                remove_success = false;
+                            }
+                        );
+
                     };
+
                 }
             });
 	};
 });
 
-client_app.controller('ClientController', function ($scope, $route, $routeParams, $location, Clients) {
+client_app.controller('ClientController', function ($scope, $route, $routeParams, $location, Clients, AlertService) {
     // Handle Alert
-    $scope.alerts = [];
-    var showAlert = function (type, message ) {
-        var alert = { type: type, msg: message };
-        //console.log("Alert Message " + alert.msg );
-        $scope.alerts = [ alert ];
-    };
+    var alert = AlertService($scope);
 
     // Add client to the list
     var addAction = function () {
         $scope.client.$add(
             function () {
-                showAlert( "success", "New client '" + $scope.client.first_name + " " + $scope.client.last_name + "' added." );
+                alert.$success("New client '" + $scope.client.first_name + " " + $scope.client.last_name + "' added.");
             },
             function (error) {
-                showAlert( "error", "Error adding new client.  Server message: '" + error["data"] + "'" );
+                alert.$resource_error("Failed to add a new client.", error);
             }
         );
     };
@@ -90,11 +173,11 @@ client_app.controller('ClientController', function ($scope, $route, $routeParams
         $scope.client.$save(
             { id: $routeParams.id },
             function () {
-                showAlert( "success", "'" + $scope.client.first_name + " " + $scope.client.last_name + "' updated." );
+                alert.$success("'" + $scope.client.first_name + " " + $scope.client.last_name + "' updated.");
                 $location.path("#/list");
             },
             function (error) {
-                showAlert( "error", "Error saving client.  Server message: '" + error["data"] + "'" );
+                alert.$resource_error("Failed to save the client.", error);
             }
         );
     };
@@ -113,9 +196,9 @@ client_app.controller('ClientController', function ($scope, $route, $routeParams
 
         $scope.client = Clients.get(
             { id: $routeParams.id },
-            function () {},
+            angular.noop,
             function (error) {
-                showAlert( "error", "Error retrieving client detail.  Server message: '" + error["data"] + "'" );
+                alert.$resource_error("Failed to retrieve client detail.", error);
             }
         );
     }

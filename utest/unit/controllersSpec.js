@@ -23,10 +23,14 @@ describe('client.app', function() {
                 };
                 return function (title) {
                     confirm_text = title;
-                    //console.log("Return ok for '" + title + "'")
                     return mock_open;
                 };
-			})
+            });
+            $provide.factory('CacheTemplates', function() {
+                // Cache template causes the $httpBackend to fail with unexpected GET
+                // when retrieve the template.  Mock the service to do nothing.
+                return angular.noop;
+            });
 		})
 	);
 
@@ -62,7 +66,7 @@ describe('client.app', function() {
 				scope = $rootScope.$new();
 				$httpBackend.whenGET('/json').respond(testClients);
 				$httpBackend.whenDELETE(/\/json\/\d+/).respond();
-				var ctrl = $controller("ClientListController", { $scope: scope});
+				var ctrl = $controller("ClientListController", { $scope: scope });
 				$httpBackend.flush();
 				// Clear the Confirm Service Text
 				confirm_text = ""
@@ -76,21 +80,25 @@ describe('client.app', function() {
 		it('deleting a client from the middle of array.', function() {
 			// Delete second item, make sure that Confirm service is called with the name to delete
 			// and make sure that new second item has id of 3
-			scope.removeClient(2, "Jona Dino");
-			expect(confirm_text).toMatch(/Jona Dino/);
-			expect(scope.clients[1].object_id).toBe(3);
-			expect(scope.clients.length).toBe(testClients.length - 1);
+			scope.removeClient(2, "Jona Dino", function () {
+                expect(confirm_text).toMatch(/Jona Dino/);
+                expect(scope.clients[1].object_id).toBe(3);
+                expect(scope.clients.length).toBe(testClients.length - 1);
+            });
 		});
 
 		it('deleting first and last clients from the array', function() {
 			// Delete first item and make sure that new first item has id of 2
-			scope.removeClient(1, "Carla Musselwhite");
-			expect(scope.clients[0].object_id).toBe(2);
+			scope.removeClient(1, "Carla Musselwhite", function () {
+                expect(scope.clients[0].object_id).toBe(2);
+            });
+
 			// Delete the last item and make sure that new last item has id of 4
-			scope.removeClient(5, "Andree Yousef");
-			expect(scope.clients[2].object_id).toBe(4);
-			// Final legth should have 2 less items
-			expect(scope.clients.length).toBe(testClients.length - 2);
+			scope.removeClient(5, "Andree Yousef", function () {
+                expect(scope.clients[2].object_id).toBe(4);
+                // Final legth should have 2 less items
+                expect(scope.clients.length).toBe(testClients.length - 2);
+            });
 		});
 		
 	});
