@@ -1,4 +1,6 @@
-// Configure Service to access JSON provider
+/**
+ * Create guiServices to be used by the controllers.
+ */
 angular.module("guiServices", ['ngResource', "ui.bootstrap"])
     .factory('CacheTemplates', function($http, $templateCache) {
         return function() {
@@ -15,7 +17,6 @@ angular.module("guiServices", ['ngResource', "ui.bootstrap"])
                 'template/dialog/message.html'
             ];
             templs.map ( function(templ) {
-                console.log("Template loaded: " + templ);
                 $http.get(templ).success( function(data) {
                     $templateCache.put(templ, data);
                 });
@@ -79,13 +80,23 @@ angular.module("guiServices", ['ngResource', "ui.bootstrap"])
         };
     });
 
-// Initialize application
+
+
+
+/**
+ * Initialize angular application and pre-cache the template
+ */
 client_app = angular.module("client.app", ["guiServices"])
     .run( function( CacheTemplates ) {
         CacheTemplates();
     });
 
-// Configure Routes
+
+
+
+/**
+ * Configure Application Route
+ */
 client_app.config(function ($routeProvider) {
 	$routeProvider.
 		when("/list", { templateUrl: "template/list.html", controller: 'ClientListController' }).
@@ -94,7 +105,12 @@ client_app.config(function ($routeProvider) {
 		otherwise({redirectTo: '/list'});
 });
 
-// Configure Controller
+
+
+
+/**
+ * Configure Controllers
+ */
 client_app.controller('ClientListController', function ($scope, Clients, Confirm, AlertService) {
     // Handle Alert
     var alert = AlertService($scope);
@@ -113,40 +129,41 @@ client_app.controller('ClientListController', function ($scope, Clients, Confirm
 
 
 	// Delete client
-	$scope.removeClient = function (object_id, full_name, callback) {
+    var removeClient = function(object_id, callback) {
+        // callback will return a client_deleted flag
+        var clients = $scope.clients
+        for ( var i = 0; i < clients.length; i++) {
+            var client = clients[i];
+            if ( client.object_id === object_id ) {
+                var client_full_name = client.first_name + " " + client.last_name;
+                client.$remove(
+                    { id: client.object_id },
+                    function () {
+                        alert.$success("'" + client_full_name + "' deleted ")
+                        clients.splice(i, 1);
+                        if ( callback ) {
+                            callback(true);
+                        }
+                    },
+                    function (error) {
+                        alert.$resource_error("Failed to delete '" + client_full_name + "'.", error);
+                        if ( callback ) {
+                            callback(false);
+                        }
+                    }
+                );
+                break;
+            };
+        };
+    };
+
+	$scope.askToRemoveClient = function (object_id, full_name, callback) {
         // Callback is used for unit testing to confirm that clients array has be updated correctly
         Confirm("About to delete '" + full_name + "'.")
             .open()
             .then( function (result) {
                 if ( result == "ok" ){
-                    var index_to_remove = -1;
-                    for ( var i = 0; i < $scope.clients.length; i++) {
-                        var c = $scope.clients[i];
-                        if ( c["object_id"] == object_id ) {
-                            index_to_remove = i;
-                            break;
-                        };
-                    };
-
-                    if ( index_to_remove >= 0 ) {
-                        var remove_success = true;
-                        var client = $scope.clients[i];
-                        var client_full_name = client.first_name + " " + client.last_name;
-                        client.$remove(
-                            { id: client.object_id },
-                            function () {
-                                alert.$success("'" + client_full_name + "' deleted ")
-                                $scope.clients.splice(index_to_remove, 1);
-                                callback()
-                            },
-                            function (error) {
-                                alert.$resource_error("Failed to delete '" + client_full_name + "'.", error);
-                                remove_success = false;
-                            }
-                        );
-
-                    };
-
+                    removeClient(object_id, callback);
                 }
             });
 	};

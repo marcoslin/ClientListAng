@@ -16,7 +16,7 @@
             <tr ng-repeat="client in clients | orderBy:sortBy:sortDesc | filter:filter.name">
                 <td>
                     <a class="full_name" href="#/{{ client.object_id }}" ng-bind-html-unsafe="client.first_name + ' ' + client.last_name"></a>
-                    <a class="delete hover" title="Delete client" ng-click="removeClient(client.object_id, client.first_name + ' ' + client.last_name);">x</a>
+                    <a class="delete hover" title="Delete client" ng-click="askToRemoveClient(client.object_id, client.first_name + ' ' + client.last_name);">x</a>
                 </td>
                 <td ng-bind="client.city"></td>
                 <td ng-bind="client.post_code"></td>
