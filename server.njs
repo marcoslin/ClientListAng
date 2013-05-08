@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/*jslint vars: true, node: true */
+
 var fs = require('fs');
 var express = require('express');
 var nosqlite = require("nosqlite");
