@@ -1,21 +1,24 @@
-'use strict';
-
 /* jasmine specs for controllers go here */
-describe('client.app', function() {
-	
-	// Need to load module to be used.  By default, on ng module is loaded.
-	beforeEach(module("client.app"));
 
-	// Override the default Confirm service to return always true
-	var confirm_text = "";
-	beforeEach(
-		module( function ($provide) {
-			$provide.factory('Confirm', function () {
+/*globals describe, beforeEach, angular, module, it */
+/*jslint vars: true, node: true */
+
+describe('client.app', function () {
+    'use strict';
+
+    // Need to load module to be used.  By default, on ng module is loaded.
+    beforeEach(module("client.app"));
+
+    // Override the default Confirm service to return always true
+    var confirm_text = "";
+    beforeEach(
+        module(function ($provide) {
+            $provide.factory('Confirm', function () {
                 var mock_then = {
                     then: function (callback) {
-                        callback("ok")
+                        callback("ok");
                     }
-                }
+                };
                 var mock_open = {
                     open: function () {
                         return mock_then;
@@ -26,22 +29,22 @@ describe('client.app', function() {
                     return mock_open;
                 };
             });
-            $provide.factory('CacheTemplates', function() {
+            $provide.factory('CacheTemplates', function () {
                 // Cache template causes the $httpBackend to fail with unexpected GET
                 // when retrieve the template.  Mock the service to do nothing.
                 return angular.noop;
             });
-		})
-	);
+        })
+    );
 
-	// Create a default list of client for testing
-	var testClients = [
-		{ "object_id": 1, "first_name": "Carla", "last_name": "Musselwhite", "city": "Rome", "post_code": "00151" },
-		{ "object_id": 2, "first_name": "Jona", "last_name": "Dino", "city": "Rome", "post_code": "00177" },
-		{ "object_id": 3, "first_name": "Shala", "last_name": "Schwartz", "city": "New York", "post_code": "20142" },
-		{ "object_id": 4, "first_name": "Susie", "last_name": "Boman", "city": "New York", "post_code": "20130" },
-		{ "object_id": 5, "first_name": "Andree", "last_name": "Yousef", "city": "London", "post_code": "SW7 151" }
-	];
+    // Create a default list of client for testing
+    var testClients = [
+        { "object_id": 1, "first_name": "Carla", "last_name": "Musselwhite", "city": "Rome", "post_code": "00151" },
+        { "object_id": 2, "first_name": "Jona", "last_name": "Dino", "city": "Rome", "post_code": "00177" },
+        { "object_id": 3, "first_name": "Shala", "last_name": "Schwartz", "city": "New York", "post_code": "20142" },
+        { "object_id": 4, "first_name": "Susie", "last_name": "Boman", "city": "New York", "post_code": "20130" },
+        { "object_id": 5, "first_name": "Andree", "last_name": "Yousef", "city": "London", "post_code": "SW7 151" }
+    ];
 
     // Function used to retrive client by id
     var get_client = function (object_id) {
@@ -54,62 +57,62 @@ describe('client.app', function() {
     };
 
     /**
-	 *
-	 * Testing the ClientListController
-	 *
-	 */
-	describe('ClientListController', function(){
-		var scope;
-		
-		beforeEach(
-			inject(function ($rootScope, $controller, $httpBackend) {
-				scope = $rootScope.$new();
-				$httpBackend.whenGET('/json').respond(testClients);
-				$httpBackend.whenDELETE(/\/json\/\d+/).respond();
-				var ctrl = $controller("ClientListController", { $scope: scope });
-				$httpBackend.flush();
-				// Clear the Confirm Service Text
-				confirm_text = ""
-			})
-		);
-		
-		it('clients should be initialized with full population.', function() {
-			expect(scope.clients.length).toBe(testClients.length);
-		});
-		
-		it('deleting a client from the middle of array.', function() {
-			// Delete second item, make sure that Confirm service is called with the name to delete
-			// and make sure that new second item has id of 3
-			scope.askToRemoveClient(2, "Jona Dino", function () {
+     *
+     * Testing the ClientListController
+     *
+     */
+    describe('ClientListController', function(){
+        var scope;
+
+        beforeEach(
+            inject(function ($rootScope, $controller, $httpBackend) {
+                scope = $rootScope.$new();
+                $httpBackend.whenGET('/json').respond(testClients);
+                $httpBackend.whenDELETE(/\/json\/\d+/).respond();
+                var ctrl = $controller("ClientListController", { $scope: scope });
+                $httpBackend.flush();
+                // Clear the Confirm Service Text
+                confirm_text = ""
+            })
+        );
+
+        it('clients should be initialized with full population.', function() {
+            expect(scope.clients.length).toBe(testClients.length);
+        });
+
+        it('deleting a client from the middle of array.', function() {
+            // Delete second item, make sure that Confirm service is called with the name to delete
+            // and make sure that new second item has id of 3
+            scope.askToRemoveClient(2, "Jona Dino", function () {
                 expect(confirm_text).toMatch(/Jona Dino/);
                 expect(scope.clients[1].object_id).toBe(3);
                 expect(scope.clients.length).toBe(testClients.length - 1);
             });
-		});
+        });
 
-		it('deleting first and last clients from the array', function() {
-			// Delete first item and make sure that new first item has id of 2
-			scope.askToRemoveClient(1, "Carla Musselwhite", function () {
+        it('deleting first and last clients from the array', function() {
+            // Delete first item and make sure that new first item has id of 2
+            scope.askToRemoveClient(1, "Carla Musselwhite", function () {
                 expect(scope.clients[0].object_id).toBe(2);
             });
 
-			// Delete the last item and make sure that new last item has id of 4
-			scope.askToRemoveClient(5, "Andree Yousef", function () {
+            // Delete the last item and make sure that new last item has id of 4
+            scope.askToRemoveClient(5, "Andree Yousef", function () {
                 expect(scope.clients[2].object_id).toBe(4);
                 // Final legth should have 2 less items
                 expect(scope.clients.length).toBe(testClients.length - 2);
             });
-		});
-		
-	});
-	
-	/**
-	 *
-	 * Testing the ClientController
-	 * 
-	 */
-	describe('ClientController', function(){
-		var scope, httpBackend;
+        });
+
+    });
+
+    /**
+     *
+     * Testing the ClientController
+     *
+     */
+    describe('ClientController', function(){
+        var scope, httpBackend;
         beforeEach(
             inject(function ($rootScope, $httpBackend) {
                 scope = $rootScope.$new();
@@ -170,7 +173,7 @@ describe('client.app', function() {
                 expect(alert.msg).toMatch(/Benjamin Lesh.+added\.$/);
             });
         });
-		
-	});
+
+    });
 
 });

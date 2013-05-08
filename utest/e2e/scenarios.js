@@ -1,21 +1,23 @@
-'use strict';
-
 /* http://docs.angularjs.org/guide/dev_guide.e2e-testing */
 
-describe('client.app', function() {
+/*globals describe, beforeEach, module, it, browser, input, expect, repeater, element */
+/*jslint vars: true, node: true */
 
-	describe('List View', function() {
+describe('client.app', function () {
+    'use strict';
+
+    describe('List View', function () {
         it('resetdb', function () {
             browser().navigateTo('/reloadb/utest');
         });
 
-		beforeEach(function() {
-			browser().navigateTo('/#/list');
-		});
+        beforeEach(function () {
+            browser().navigateTo('/#/list');
+        });
 
-		it('initial population should be 10', function() {
-			expect(repeater('.full_name').count()).toBe(10);
-		});
+        it('initial population should be 10', function () {
+            expect(repeater('.full_name').count()).toBe(10);
+        });
 
         it('filter by Rome should return 2', function () {
             input('filter.name').enter('Rome');
@@ -48,20 +50,28 @@ describe('client.app', function() {
             expect(repeater('.full_name').count()).toBe(10);
         });
 
+        it('clicking Quick Add should add a "New Client"', function () {
+            element('#quick_add').click();
+            expect(repeater('.full_name').count()).toBe(11);
+            expect(element('.full_name:eq(7)').text()).toMatch(/New Client/);
+        });
+
         it('delete should drop population to 9 after delete', function () {
-            element(".delete:eq(4)").click();
-            expect(element(".modal-header h1").text()).toMatch(/Kenisha Fredricks/);
+            element(".delete:eq(7)").click();
+            expect(element(".modal-header h1").text()).toMatch(/New Client/);
             element(".modal-footer .confirm-ok").click();
-            expect(repeater('.full_name').count()).toBe(9);
+            expect(repeater('.full_name').count()).toBe(10);
             // Make sure that alert services display a success message
             expect(repeater('#alert_section .alert-success').count()).toBe(1);
-            expect(element(".alert div span:first-of-type").text()).toMatch(/Kenisha Fredricks/);
+            expect(element(".alert div span:first-of-type").text()).toMatch(/New Client/);
             // Make sure taht alert can be closed
             element('#alert_section .alert .close').click();
             expect(repeater("#alert_section .alert").count()).toBe(0);
         });
 
-	});
+
+
+    });
 
     describe('Edit View', function () {
         it('resetdb', function () {
@@ -93,37 +103,35 @@ describe('client.app', function() {
 
     });
 
-	describe('Add View', function () {
+    describe('Add View', function () {
         it('resetdb', function () {
             browser().navigateTo('/reloadb/utest');
         });
 
-		beforeEach(function() {
-			browser().navigateTo('/#/add');
-		});
-		
-		it('should not submit without last name.', function () {
-			input("client.first_name").enter("John");
-			element("#submit_detailForm").click();
-            expect(repeater(".alert").count()).toBe(0);
-		});
+        beforeEach(function () {
+            browser().navigateTo('/#/add');
+        });
 
-		it('successful submit should show alert', function () {
-			input("client.first_name").enter("John");
-			input("client.last_name").enter("Tester");
-			element("#submit_detailForm").click();
+        it('should not submit without last name.', function () {
+            input("client.first_name").enter("John");
+            element("#submit_detailForm").click();
+            expect(repeater(".alert").count()).toBe(0);
+        });
+
+        it('successful submit should show alert', function () {
+            input("client.first_name").enter("John");
+            input("client.last_name").enter("Tester");
+            element("#submit_detailForm").click();
 
             // Make sure that alert services display a success message
             expect(repeater("#alert_section .alert").count()).toBe(1);
-			expect(element("#alert_section .alert div span:first-of-type").text()).toMatch(/John Tester/);
+            expect(element("#alert_section .alert div span:first-of-type").text()).toMatch(/John Tester/);
             // Make sure taht alert can be closed
             element('#alert_section .alert .close').click();
             expect(repeater("#alert_section .alert").count()).toBe(0);
-		});
+        });
 
 
-	});
-
-
+    });
 
 });
