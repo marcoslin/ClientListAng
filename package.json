@@ -1,0 +1,26 @@
+{
+  "name": "ClientListAng",
+  "version": "0.0.1",
+  "description": "Sample CRUD app created using AngularJS/Node/Sqlite",
+  "main": "index.js",
+  "dependencies": {
+    "express": "~3.2.0",
+    "step": "~0.0.5",
+    "sqlite3": "~2.1.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/marcoslin/ClientListAng.git"
+  },
+  "author": "Marcos Lin",
+  "license": "BSD",
+  "readmeFilename": "README.md",
+  "gitHead": "cc16617e9fc1e982d53141b10873f95c8856274a",
+  "bugs": {
+    "url": "https://github.com/marcoslin/ClientListAng/issues"
+  }
+}
